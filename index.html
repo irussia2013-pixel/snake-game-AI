@@ -3,301 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Snake: Pause Mode</title>
+    <title>Neon Snake: Shop</title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
     <style>
+        :root { --main-cyan: #00ffcc; --main-pink: #ff007f; --main-yellow: #f1c40f; }
         body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            color: #fff;
-            font-family: 'Fredoka One', cursive;
-            overflow: hidden;
-            touch-action: none;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; margin: 0; background: #1a1a2e; color: #fff;
+            font-family: 'Fredoka One', cursive; overflow: hidden; touch-action: none;
         }
-
-        #scorePanel {
-            display: flex;
-            justify-content: space-between;
-            width: 360px;
-            font-size: 20px;
-            margin-bottom: 10px;
-            text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
-        }
-
-        .record-val { color: #f1c40f; }
-
-        #gameContainer {
-            position: relative;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
-            border-radius: 15px;
-        }
-
-        canvas {
-            display: block;
-            background-color: #0f0f1a;
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-            background-size: 20px 20px;
-            border-radius: 15px;
-        }
-
+        #topBar { display: flex; justify-content: space-between; width: 340px; margin-bottom: 10px; font-size: 18px; }
+        #gameContainer { position: relative; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        canvas { display: block; background: #0f0f1a; border-radius: 15px; }
         .overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 15, 26, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: 15px;
-            z-index: 10;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 15, 26, 0.98); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; border-radius: 15px; z-index: 10;
         }
-
-        .btn-group { display: flex; flex-direction: column; gap: 12px; width: 220px; }
-
+        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .skin-card {
+            background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;
+            text-align: center; border: 2px solid transparent; width: 100px;
+        }
+        .skin-card.owned { border-color: var(--main-cyan); }
+        .skin-card.selected { background: rgba(0, 255, 204, 0.2); }
+        .skin-preview { width: 40px; height: 20px; margin: 5px auto; border-radius: 4px; }
+        .price { font-size: 12px; color: var(--main-yellow); }
         button {
-            padding: 15px;
-            font-size: 18px;
-            font-family: 'Fredoka One', cursive;
-            border: none;
-            border-radius: 12px;
-            color: white;
-            cursor: pointer;
-            transition: transform 0.1s;
+            padding: 12px 25px; border: none; border-radius: 10px;
+            font-family: 'Fredoka One'; cursor: pointer; background: var(--main-cyan); color: #000;
         }
-
-        button:active { transform: scale(0.95); }
-        .btn-easy { background: #2ecc71; box-shadow: 0 0 15px #2ecc71; }
-        .btn-medium { background: #f1c40f; box-shadow: 0 0 15px #f1c40f; }
-        .btn-hard { background: #e74c3c; box-shadow: 0 0 15px #e74c3c; }
-        .btn-restart { background: #3498db; box-shadow: 0 0 15px #3498db; }
-        .btn-resume { background: #9b59b6; box-shadow: 0 0 15px #9b59b6; }
-
-        #pauseBtn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 40px;
-            height: 40px;
-            padding: 0;
-            background: rgba(255,255,255,0.1);
-            border-radius: 8px;
-            z-index: 5;
-            font-size: 14px;
-        }
-
         .hidden { display: none !important; }
-        .new-record { animation: glow 0.5s infinite alternate; }
-
-        @keyframes glow {
-            from { text-shadow: 0 0 5px #fff, 0 0 10px #f1c40f; }
-            to { text-shadow: 0 0 10px #fff, 0 0 20px #f1c40f; }
-        }
+        #coinsDisplay { color: var(--main-yellow); }
     </style>
 </head>
 <body>
 
-    <div id="scorePanel">
-        <div>Счёт: <span id="scoreVal">0</span></div>
-        <div>Рекорд: <span id="highScoreVal" class="record-val">0</span></div>
+<div id="topBar">
+    <div>Счёт: <span id="curScore">0</span></div>
+    <div id="coinsDisplay">💰 <span id="totalCoins">0</span></div>
+</div>
+
+<div id="gameContainer">
+    <canvas id="gameCanvas" width="340" height="340"></canvas>
+
+    <div id="menuOverlay" class="overlay">
+        <h2>НЕОНОВЫЙ МАГАЗИН</h2>
+        <div class="shop-grid">
+            <div class="skin-card" id="skin-default" onclick="selectSkin('#00ffcc', 0, 'default')">
+                <div class="skin-preview" style="background: #00ffcc"></div>
+                <div class="price">ВЫБРАНО</div>
+            </div>
+            <div class="skin-card" id="skin-pink" onclick="buyOrSelect('#ff007f', 100, 'pink')">
+                <div class="skin-preview" style="background: #ff007f"></div>
+                <div class="price" id="price-pink">100 💰</div>
+            </div>
+            <div class="skin-card" id="skin-gold" onclick="buyOrSelect('#f1c40f', 500, 'gold')">
+                <div class="skin-preview" style="background: #f1c40f"></div>
+                <div class="price" id="price-gold">500 💰</div>
+            </div>
+            <div class="skin-card" id="skin-white" onclick="buyOrSelect('#ffffff', 1000, 'white')">
+                <div class="skin-preview" style="background: #ffffff"></div>
+                <div class="price" id="price-white">1000 💰</div>
+            </div>
+        </div>
+        <button onclick="startGame()">ИГРАТЬ</button>
     </div>
 
-    <div id="gameContainer">
-        <button id="pauseBtn" onclick="togglePause()">II</button>
-        <canvas id="gameCanvas" width="360" height="360" onclick="togglePause()"></canvas>
-        
-        <div id="menuOverlay" class="overlay">
-            <h2 style="margin-bottom:10px">NEON SNAKE</h2>
-            <div class="btn-group">
-                <button class="btn-easy" onclick="startGame('easy', 180)">ЛЕГКО</button>
-                <button class="btn-medium" onclick="startGame('medium', 110)">НОРМАЛЬНО</button>
-                <button class="btn-hard" onclick="startGame('hard', 70)">СЛОЖНО</button>
-            </div>
-        </div>
-
-        <div id="pauseOverlay" class="overlay hidden">
-            <h2 style="color: #9b59b6;">ПАУЗА</h2>
-            <div class="btn-group">
-                <button class="btn-resume" onclick="togglePause()">ПРОДОЛЖИТЬ</button>
-                <button class="btn-restart" onclick="showMenu()">В МЕНЮ</button>
-            </div>
-        </div>
-
-        <div id="gameOverOverlay" class="overlay hidden">
-            <h2 id="overTitle" style="color: #e74c3c;">GAME OVER</h2>
-            <p style="font-size: 20px;">Счёт: <span id="finalScore">0</span></p>
-            <p id="recordMsg" style="color: #f1c40f; display:none; margin-bottom: 20px;">НОВЫЙ РЕКОРД!</p>
-            <div class="btn-group">
-                <button class="btn-restart" onclick="showMenu()">В МЕНЮ</button>
-            </div>
-        </div>
+    <div id="gameOverOverlay" class="overlay hidden">
+        <h2 style="color: #ff5e57">ИГРА ОКОНЧЕНА</h2>
+        <p>Вы заработали: <span id="earnedCoins">0</span> 💰</p>
+        <button onclick="showMenu()">В МАГАЗИН</button>
     </div>
+</div>
 
-    <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        const scoreValElement = document.getElementById("scoreVal");
-        const highScoreValElement = document.getElementById("highScoreVal");
-        const finalScoreElement = document.getElementById("finalScore");
-        const menuOverlay = document.getElementById("menuOverlay");
-        const pauseOverlay = document.getElementById("pauseOverlay");
-        const gameOverOverlay = document.getElementById("gameOverOverlay");
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    
+    // Данные игрока
+    let coins = parseInt(localStorage.getItem('snake_coins')) || 0;
+    let ownedSkins = JSON.parse(localStorage.getItem('snake_skins')) || ['default'];
+    let selectedColor = localStorage.getItem('snake_selected_color') || '#00ffcc';
 
-        const gridSize = 20;
-        const tileCount = canvas.width / gridSize;
-
-        let score = 0, dx = 0, dy = 0, snake = [];
-        let food = {x: 5, y: 5};
-        let gameRunning = false, isPaused = false;
-        let gameSpeed = 110, currentDifficulty = 'medium', gameLoop;
-
-        function getHighScore(diff) { return localStorage.getItem('snake_hc_' + diff) || 0; }
-
-        function startGame(diff, speed) {
-            currentDifficulty = diff;
-            gameSpeed = speed;
-            highScoreValElement.innerText = getHighScore(diff);
-            menuOverlay.classList.add('hidden');
-            gameOverOverlay.classList.add('hidden');
-            pauseOverlay.classList.add('hidden');
-            resetGameState();
-            gameRunning = true;
-            isPaused = false;
-            main();
-        }
-
-        function togglePause() {
-            if (!gameRunning) return;
-            isPaused = !isPaused;
-            if (isPaused) {
-                pauseOverlay.classList.remove('hidden');
-                clearTimeout(gameLoop);
-            } else {
-                pauseOverlay.classList.add('hidden');
-                main();
-            }
-        }
-
-        function showMenu() {
-            gameOverOverlay.classList.add('hidden');
-            pauseOverlay.classList.add('hidden');
-            menuOverlay.classList.remove('hidden');
-            gameRunning = false;
-            isPaused = false;
-            clearTimeout(gameLoop);
-        }
-
-        function resetGameState() {
-            score = 0;
-            scoreValElement.innerHTML = "0";
-            scoreValElement.classList.remove('new-record');
-            snake = [{x: 9, y: 9}, {x: 8, y: 9}, {x: 7, y: 9}];
-            dx = 1; dy = 0;
-            createFood();
-        }
-
-        function main() {
-            if (isPaused || !gameRunning) return;
-
-            if (didGameEnd()) {
-                showGameOver();
-                return;
-            }
-
-            gameLoop = setTimeout(() => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                drawFood();
-                advanceSnake();
-                drawSnake();
-                main();
-            }, gameSpeed);
-        }
-
-        function drawSnake() {
-            snake.forEach((part, index) => {
-                ctx.shadowBlur = 15;
-                ctx.fillStyle = (index === 0) ? "#00ffcc" : "#2ecc71";
-                ctx.shadowColor = ctx.fillStyle;
-                ctx.beginPath();
-                ctx.roundRect(part.x * gridSize + 1, part.y * gridSize + 1, gridSize - 2, gridSize - 2, 6);
-                ctx.fill();
-            });
-            ctx.shadowBlur = 0;
-        }
-
-        function advanceSnake() {
-            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-            snake.unshift(head);
-            if (head.x === food.x && head.y === food.y) {
-                score += 10;
-                scoreValElement.innerHTML = score;
-                if (score > getHighScore(currentDifficulty)) scoreValElement.classList.add('new-record');
-                createFood();
-            } else {
-                snake.pop();
-            }
-        }
-
-        function didGameEnd() {
-            const head = snake[0];
-            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) return true;
-            for (let i = 1; i < snake.length; i++) {
-                if (snake[i].x === head.x && snake[i].y === head.y) return true;
-            }
-            return false;
-        }
-
-        function createFood() {
-            food.x = Math.floor(Math.random() * tileCount);
-            food.y = Math.floor(Math.random() * tileCount);
-            if (snake.some(p => p.x === food.x && p.y === food.y)) createFood();
-        }
-
-        function drawFood() {
-            ctx.shadowBlur = 20; ctx.shadowColor = "#e74c3c"; ctx.fillStyle = "#ff5e57";
-            ctx.beginPath();
-            ctx.arc(food.x * gridSize + 10, food.y * gridSize + 10, 8, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-        }
-
-        let tsX = 0, tsY = 0;
-        window.addEventListener('touchstart', e => { tsX = e.touches[0].clientX; tsY = e.touches[0].clientY; }, {passive: false});
-        window.addEventListener('touchend', e => {
-            if (!gameRunning || isPaused) return;
-            const dx_swipe = e.changedTouches[0].clientX - tsX;
-            const dy_swipe = e.changedTouches[0].clientY - tsY;
-            if (Math.abs(dx_swipe) > Math.abs(dy_swipe)) {
-                if (Math.abs(dx_swipe) > 30) { 
-                    if (dx_swipe > 0 && dx === 0) { dx = 1; dy = 0; } 
-                    else if (dx_swipe < 0 && dx === 0) { dx = -1; dy = 0; } 
-                }
-            } else {
-                if (Math.abs(dy_swipe) > 30) { 
-                    if (dy_swipe > 0 && dy === 0) { dx = 0; dy = 1; } 
-                    else if (dy_swipe < 0 && dy === 0) { dx = 0; dy = -1; } 
-                }
-            }
+    function updateUI() {
+        document.getElementById('totalCoins').innerText = coins;
+        ownedSkins.forEach(id => {
+            const el = document.getElementById('price-' + id);
+            if(el) el.innerText = "КУПЛЕНО";
+            const card = document.getElementById('skin-' + id);
+            if(card) card.classList.add('owned');
         });
+    }
 
-        function showGameOver() {
-            gameRunning = false;
-            const hc = getHighScore(currentDifficulty);
-            if (score > hc) {
-                localStorage.setItem('snake_hc_' + currentDifficulty, score);
-                document.getElementById('recordMsg').style.display = 'block';
-            } else {
-                document.getElementById('recordMsg').style.display = 'none';
-            }
-            finalScoreElement.innerText = score;
-            gameOverOverlay.classList.remove('hidden');
+    function buyOrSelect(color, price, id) {
+        if (ownedSkins.includes(id)) {
+            selectSkin(color, 0, id);
+        } else if (coins >= price) {
+            coins -= price;
+            ownedSkins.push(id);
+            localStorage.setItem('snake_coins', coins);
+            localStorage.setItem('snake_skins', JSON.stringify(ownedSkins));
+            selectSkin(color, 0, id);
+            updateUI();
+        } else {
+            alert("Недостаточно монет!");
         }
-    </script>
+    }
+
+    function selectSkin(color, price, id) {
+        selectedColor = color;
+        localStorage.setItem('snake_selected_color', color);
+        document.querySelectorAll('.skin-card').forEach(c => c.classList.remove('selected'));
+        document.getElementById('skin-' + id).classList.add('selected');
+    }
+
+    // ЛОГИКА ИГРЫ (упрощенно)
+    let snake, food, dx, dy, score, gameLoop;
+    const gridSize = 20, tileCount = 17;
+
+    function startGame() {
+        document.getElementById('menuOverlay').classList.add('hidden');
+        document.getElementById('gameOverOverlay').classList.add('hidden');
+        snake = [{x:8, y:8}]; food = {x:5, y:5}; dx = 1; dy = 0; score = 0;
+        main();
+    }
+
+    function main() {
+        gameLoop = setTimeout(() => {
+            if (move()) { draw(); main(); }
+            else { endGame(); }
+        }, 110);
+    }
+
+    function move() {
+        const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+        if (head.x<0||head.x>=tileCount||head.y<0||head.y>=tileCount) return false;
+        if (snake.some(s => s.x === head.x && s.y === head.y)) return false;
+        
+        snake.unshift(head);
+        if (head.x === food.x && head.y === food.y) {
+            score += 10;
+            document.getElementById('curScore').innerText = score;
+            food = {x: Math.floor(Math.random()*tileCount), y: Math.floor(Math.random()*tileCount)};
+        } else { snake.pop(); }
+        return true;
+    }
+
+    function draw() {
+        ctx.clearRect(0,0,340,340);
+        ctx.fillStyle = "#ff5e57"; ctx.beginPath(); ctx.arc(food.x*20+10, food.y*20+10, 8, 0, 7); ctx.fill();
+        snake.forEach((p, i) => {
+            ctx.fillStyle = i===0 ? "#fff" : selectedColor;
+            ctx.shadowBlur = 10; ctx.shadowColor = selectedColor;
+            ctx.fillRect(p.x*20+1, p.y*20+1, 18, 18);
+        });
+    }
+
+    function endGame() {
+        coins += score;
+        localStorage.setItem('snake_coins', coins);
+        document.getElementById('earnedCoins').innerText = score;
+        document.getElementById('gameOverOverlay').classList.remove('hidden');
+        updateUI();
+    }
+
+    function showMenu() {
+        document.getElementById('gameOverOverlay').classList.add('hidden');
+        document.getElementById('menuOverlay').classList.remove('hidden');
+    }
+
+    // Управление свайпами (аналогично предыдущим версиям)
+    let tsX, tsY;
+    window.addEventListener('touchstart', e => { tsX = e.touches[0].clientX; tsY = e.touches[0].clientY; });
+    window.addEventListener('touchend', e => {
+        const x = e.changedTouches[0].clientX - tsX, y = e.changedTouches[0].clientY - tsY;
+        if (Math.abs(x) > Math.abs(y)) { if(x>30 && dx===0){dx=1;dy=0} else if(x<-30 && dx===0){dx=-1;dy=0} }
+        else { if(y>30 && dy===0){dy=1;dx=0} else if(y<-30 && dy===0){dy=-1;dx=0} }
+    });
+
+    updateUI();
+    selectSkin(selectedColor, 0, 'default');
+</script>
 </body>
 </html>
