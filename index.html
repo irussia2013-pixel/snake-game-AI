@@ -3,38 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Snake: Shop</title>
+    <title>Neon Snake: Ultimate</title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
     <style>
-        :root { --main-cyan: #00ffcc; --main-pink: #ff007f; --main-yellow: #f1c40f; }
+        :root { 
+            --cyan: #00ffcc; --pink: #ff007f; --gold: #f1c40f; --blue: #3498db;
+        }
         body {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 100vh; margin: 0; background: #1a1a2e; color: #fff;
             font-family: 'Fredoka One', cursive; overflow: hidden; touch-action: none;
         }
         #topBar { display: flex; justify-content: space-between; width: 340px; margin-bottom: 10px; font-size: 18px; }
-        #gameContainer { position: relative; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        canvas { display: block; background: #0f0f1a; border-radius: 15px; }
+        #gameContainer { position: relative; border-radius: 15px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        canvas { display: block; background: #0f0f1a; border-radius: 15px; border: 2px solid rgba(255,255,255,0.1); }
+        
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 15, 26, 0.98); display: flex; flex-direction: column;
             align-items: center; justify-content: center; border-radius: 15px; z-index: 10;
         }
-        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+
+        /* Кнопки сложности */
+        .diff-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn-diff { padding: 10px; font-size: 12px; width: 80px; background: #333; }
+        .btn-diff.active { background: var(--cyan); color: #000; box-shadow: 0 0 10px var(--cyan); }
+
+        /* Магазин */
+        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .skin-card {
-            background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px;
-            text-align: center; border: 2px solid transparent; width: 100px;
+            background: rgba(255,255,255,0.05); padding: 8px; border-radius: 10px;
+            text-align: center; border: 2px solid transparent; width: 110px; cursor: pointer;
         }
-        .skin-card.owned { border-color: var(--main-cyan); }
-        .skin-card.selected { background: rgba(0, 255, 204, 0.2); }
-        .skin-preview { width: 40px; height: 20px; margin: 5px auto; border-radius: 4px; }
-        .price { font-size: 12px; color: var(--main-yellow); }
+        .skin-card.selected { border-color: var(--cyan); background: rgba(0,255,204,0.1); }
+        .skin-preview { width: 40px; height: 15px; margin: 5px auto; border-radius: 10px; }
+        .price { font-size: 11px; color: var(--gold); }
+
         button {
-            padding: 12px 25px; border: none; border-radius: 10px;
-            font-family: 'Fredoka One'; cursor: pointer; background: var(--main-cyan); color: #000;
+            padding: 12px 30px; border: none; border-radius: 10px;
+            font-family: 'Fredoka One'; cursor: pointer; background: var(--cyan); color: #000;
         }
         .hidden { display: none !important; }
-        #coinsDisplay { color: var(--main-yellow); }
+        #coinsDisplay { color: var(--gold); }
     </style>
 </head>
 <body>
@@ -48,32 +58,42 @@
     <canvas id="gameCanvas" width="340" height="340"></canvas>
 
     <div id="menuOverlay" class="overlay">
-        <h2>НЕОНОВЫЙ МАГАЗИН</h2>
+        <h2 style="margin-top:0">NEON SNAKE</h2>
+        
+        <p style="font-size: 14px; margin: 5px 0;">СЛОЖНОСТЬ</p>
+        <div class="diff-group">
+            <button class="btn-diff" id="diff-180" onclick="setDiff(180)">ЛЕГКО</button>
+            <button class="btn-diff active" id="diff-110" onclick="setDiff(110)">НОРМ</button>
+            <button class="btn-diff" id="diff-70" onclick="setDiff(70)">ХАРД</button>
+        </div>
+
+        <p style="font-size: 14px; margin: 5px 0;">МАГАЗИН СКИНОВ</p>
         <div class="shop-grid">
-            <div class="skin-card" id="skin-default" onclick="selectSkin('#00ffcc', 0, 'default')">
-                <div class="skin-preview" style="background: #00ffcc"></div>
+            <div class="skin-card selected" id="skin-default" onclick="selectSkin('#00ffcc', 'default')">
+                <div class="skin-preview" style="background: var(--cyan)"></div>
                 <div class="price">ВЫБРАНО</div>
             </div>
             <div class="skin-card" id="skin-pink" onclick="buyOrSelect('#ff007f', 100, 'pink')">
-                <div class="skin-preview" style="background: #ff007f"></div>
+                <div class="skin-preview" style="background: var(--pink)"></div>
                 <div class="price" id="price-pink">100 💰</div>
             </div>
             <div class="skin-card" id="skin-gold" onclick="buyOrSelect('#f1c40f', 500, 'gold')">
-                <div class="skin-preview" style="background: #f1c40f"></div>
+                <div class="skin-preview" style="background: var(--gold)"></div>
                 <div class="price" id="price-gold">500 💰</div>
             </div>
-            <div class="skin-card" id="skin-white" onclick="buyOrSelect('#ffffff', 1000, 'white')">
-                <div class="skin-preview" style="background: #ffffff"></div>
-                <div class="price" id="price-white">1000 💰</div>
+            <div class="skin-card" id="skin-blue" onclick="buyOrSelect('#3498db', 250, 'blue')">
+                <div class="skin-preview" style="background: var(--blue)"></div>
+                <div class="price" id="price-blue">250 💰</div>
             </div>
         </div>
+
         <button onclick="startGame()">ИГРАТЬ</button>
     </div>
 
     <div id="gameOverOverlay" class="overlay hidden">
-        <h2 style="color: #ff5e57">ИГРА ОКОНЧЕНА</h2>
-        <p>Вы заработали: <span id="earnedCoins">0</span> 💰</p>
-        <button onclick="showMenu()">В МАГАЗИН</button>
+        <h2 style="color: #ff5e57">GAME OVER</h2>
+        <p>Заработано: <span id="earnedCoins">0</span> 💰</p>
+        <button onclick="showMenu()">В МЕНЮ</button>
     </div>
 </div>
 
@@ -81,86 +101,110 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     
-    // Данные игрока
+    // Данные
     let coins = parseInt(localStorage.getItem('snake_coins')) || 0;
     let ownedSkins = JSON.parse(localStorage.getItem('snake_skins')) || ['default'];
     let selectedColor = localStorage.getItem('snake_selected_color') || '#00ffcc';
+    let gameSpeed = 110;
 
     function updateUI() {
         document.getElementById('totalCoins').innerText = coins;
         ownedSkins.forEach(id => {
-            const el = document.getElementById('price-' + id);
-            if(el) el.innerText = "КУПЛЕНО";
-            const card = document.getElementById('skin-' + id);
-            if(card) card.classList.add('owned');
+            const priceTag = document.getElementById('price-' + id);
+            if(priceTag) priceTag.innerText = "КУПЛЕНО";
+            document.getElementById('skin-' + id).classList.add('owned');
         });
+    }
+
+    function setDiff(speed) {
+        gameSpeed = speed;
+        document.querySelectorAll('.btn-diff').forEach(b => b.classList.remove('active'));
+        document.getElementById('diff-' + speed).classList.add('active');
     }
 
     function buyOrSelect(color, price, id) {
         if (ownedSkins.includes(id)) {
-            selectSkin(color, 0, id);
+            selectSkin(color, id);
         } else if (coins >= price) {
             coins -= price;
             ownedSkins.push(id);
             localStorage.setItem('snake_coins', coins);
             localStorage.setItem('snake_skins', JSON.stringify(ownedSkins));
-            selectSkin(color, 0, id);
+            selectSkin(color, id);
             updateUI();
-        } else {
-            alert("Недостаточно монет!");
         }
     }
 
-    function selectSkin(color, price, id) {
+    function selectSkin(color, id) {
         selectedColor = color;
         localStorage.setItem('snake_selected_color', color);
         document.querySelectorAll('.skin-card').forEach(c => c.classList.remove('selected'));
         document.getElementById('skin-' + id).classList.add('selected');
     }
 
-    // ЛОГИКА ИГРЫ (упрощенно)
-    let snake, food, dx, dy, score, gameLoop;
+    // ИГРОВАЯ ЛОГИКА
+    let snake, food, dx, dy, score, gameLoop, gameActive = false;
     const gridSize = 20, tileCount = 17;
 
     function startGame() {
         document.getElementById('menuOverlay').classList.add('hidden');
         document.getElementById('gameOverOverlay').classList.add('hidden');
-        snake = [{x:8, y:8}]; food = {x:5, y:5}; dx = 1; dy = 0; score = 0;
+        snake = [{x:8, y:8}, {x:7, y:8}, {x:6, y:8}];
+        food = {x:5, y:5}; dx = 1; dy = 0; score = 0;
+        document.getElementById('curScore').innerText = "0";
+        gameActive = true;
         main();
     }
 
     function main() {
+        if(!gameActive) return;
         gameLoop = setTimeout(() => {
             if (move()) { draw(); main(); }
             else { endGame(); }
-        }, 110);
+        }, gameSpeed);
     }
 
     function move() {
         const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-        if (head.x<0||head.x>=tileCount||head.y<0||head.y>=tileCount) return false;
+        if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) return false;
         if (snake.some(s => s.x === head.x && s.y === head.y)) return false;
         
         snake.unshift(head);
         if (head.x === food.x && head.y === food.y) {
             score += 10;
             document.getElementById('curScore').innerText = score;
-            food = {x: Math.floor(Math.random()*tileCount), y: Math.floor(Math.random()*tileCount)};
+            createFood();
         } else { snake.pop(); }
         return true;
     }
 
+    function createFood() {
+        food = {x: Math.floor(Math.random()*tileCount), y: Math.floor(Math.random()*tileCount)};
+        if(snake.some(s => s.x === food.x && s.y === food.y)) createFood();
+    }
+
     function draw() {
         ctx.clearRect(0,0,340,340);
-        ctx.fillStyle = "#ff5e57"; ctx.beginPath(); ctx.arc(food.x*20+10, food.y*20+10, 8, 0, 7); ctx.fill();
+        
+        // Еда
+        ctx.fillStyle = "#ff5e57"; ctx.shadowBlur = 15; ctx.shadowColor = "#ff5e57";
+        ctx.beginPath(); ctx.arc(food.x*20+10, food.y*20+10, 8, 0, Math.PI*2); ctx.fill();
+
+        // Змейка
         snake.forEach((p, i) => {
-            ctx.fillStyle = i===0 ? "#fff" : selectedColor;
-            ctx.shadowBlur = 10; ctx.shadowColor = selectedColor;
-            ctx.fillRect(p.x*20+1, p.y*20+1, 18, 18);
+            ctx.fillStyle = i === 0 ? "#fff" : selectedColor;
+            ctx.shadowBlur = 15; ctx.shadowColor = selectedColor;
+            
+            // Рисуем красивые скругленные сегменты
+            ctx.beginPath();
+            ctx.roundRect(p.x*20+1, p.y*20+1, 18, 18, 6);
+            ctx.fill();
         });
+        ctx.shadowBlur = 0;
     }
 
     function endGame() {
+        gameActive = false;
         coins += score;
         localStorage.setItem('snake_coins', coins);
         document.getElementById('earnedCoins').innerText = score;
@@ -173,17 +217,20 @@
         document.getElementById('menuOverlay').classList.remove('hidden');
     }
 
-    // Управление свайпами (аналогично предыдущим версиям)
+    // УПРАВЛЕНИЕ (СВАЙПЫ)
     let tsX, tsY;
     window.addEventListener('touchstart', e => { tsX = e.touches[0].clientX; tsY = e.touches[0].clientY; });
     window.addEventListener('touchend', e => {
+        if(!gameActive) return;
         const x = e.changedTouches[0].clientX - tsX, y = e.changedTouches[0].clientY - tsY;
-        if (Math.abs(x) > Math.abs(y)) { if(x>30 && dx===0){dx=1;dy=0} else if(x<-30 && dx===0){dx=-1;dy=0} }
-        else { if(y>30 && dy===0){dy=1;dx=0} else if(y<-30 && dy===0){dy=-1;dx=0} }
+        if (Math.abs(x) > Math.abs(y)) {
+            if(x > 30 && dx === 0){ dx=1; dy=0; } else if(x < -30 && dx === 0){ dx=-1; dy=0; }
+        } else {
+            if(y > 30 && dy === 0){ dy=1; dx=0; } else if(y < -30 && dy === 0){ dy=-1; dx=0; }
+        }
     });
 
     updateUI();
-    selectSkin(selectedColor, 0, 'default');
 </script>
 </body>
 </html>
