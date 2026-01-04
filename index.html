@@ -2,235 +2,1665 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Snake: Ultimate</title>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🐍 Змейка</title>
     <style>
-        :root { 
-            --cyan: #00ffcc; --pink: #ff007f; --gold: #f1c40f; --blue: #3498db;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
+
         body {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh; margin: 0; background: #1a1a2e; color: #fff;
-            font-family: 'Fredoka One', cursive; overflow: hidden; touch-action: none;
-        }
-        #topBar { display: flex; justify-content: space-between; width: 340px; margin-bottom: 10px; font-size: 18px; }
-        #gameContainer { position: relative; border-radius: 15px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        canvas { display: block; background: #0f0f1a; border-radius: 15px; border: 2px solid rgba(255,255,255,0.1); }
-        
-        .overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 15, 26, 0.98); display: flex; flex-direction: column;
-            align-items: center; justify-content: center; border-radius: 15px; z-index: 10;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            touch-action: none;
         }
 
-        /* Кнопки сложности */
-        .diff-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-diff { padding: 10px; font-size: 12px; width: 80px; background: #333; }
-        .btn-diff.active { background: var(--cyan); color: #000; box-shadow: 0 0 10px var(--cyan); }
-
-        /* Магазин */
-        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .skin-card {
-            background: rgba(255,255,255,0.05); padding: 8px; border-radius: 10px;
-            text-align: center; border: 2px solid transparent; width: 110px; cursor: pointer;
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
         }
-        .skin-card.selected { border-color: var(--cyan); background: rgba(0,255,204,0.1); }
-        .skin-preview { width: 40px; height: 15px; margin: 5px auto; border-radius: 10px; }
-        .price { font-size: 11px; color: var(--gold); }
 
-        button {
-            padding: 12px 30px; border: none; border-radius: 10px;
-            font-family: 'Fredoka One'; cursor: pointer; background: var(--cyan); color: #000;
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 350px;
+            color: white;
+            font-size: 13px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
         }
-        .hidden { display: none !important; }
-        #coinsDisplay { color: var(--gold); }
+
+        .stats-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .score { color: #00ff88; font-weight: bold; }
+        .high-score { color: #ffd700; font-weight: bold; }
+        .coins { color: #ffcc00; font-weight: bold; }
+        .multiplier { color: #ff66ff; font-weight: bold; font-size: 11px; }
+
+        .god-mode-indicator {
+            color: #ff0000;
+            font-size: 10px;
+            animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0.3; }
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .header-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #3d3d7a, #2a2a5a);
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            transition: all 0.15s ease;
+        }
+
+        .header-btn:active { transform: scale(0.92); }
+        .header-btn.paused { background: linear-gradient(145deg, #4a7a4a, #2a5a2a); }
+        .shop-btn { background: linear-gradient(145deg, #7a5a3d, #5a3a2a); }
+        .home-btn { background: linear-gradient(145deg, #5a3d7a, #3a2a5a); }
+
+        #gameCanvas {
+            border: 3px solid #00ff88;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+        }
+
+        .swipe-hint {
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 10, 30, 0.98);
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            border: 2px solid #00ff88;
+            z-index: 100;
+            max-width: 340px;
+            width: 92%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal.hidden { display: none; }
+        .modal.game-over { border-color: #ff4444; }
+        .modal h1, .modal h2 { margin-bottom: 12px; font-size: 22px; }
+        .modal h2.red { color: #ff4444; }
+        .modal p { font-size: 13px; margin-bottom: 8px; color: #aaa; }
+
+        .final-score { font-size: 20px !important; color: #00ff88 !important; }
+        .coins-earned { font-size: 15px !important; color: #ffcc00 !important; }
+        .multiplier-info { font-size: 12px !important; color: #ff66ff !important; }
+
+        .speed-options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 12px 0;
+        }
+
+        .speed-btn {
+            padding: 10px 16px;
+            font-size: 13px;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .speed-btn.slow { background: linear-gradient(145deg, #2d5a2d, #1a3e1a); color: #88ff88; }
+        .speed-btn.normal { background: linear-gradient(145deg, #5a5a2d, #3e3e1a); color: #ffff88; }
+        .speed-btn.fast { background: linear-gradient(145deg, #5a4a2d, #3e2e1a); color: #ffaa44; }
+        .speed-btn.extreme { background: linear-gradient(145deg, #5a2d2d, #3e1a1a); color: #ff6666; }
+        .speed-btn:active { transform: scale(0.98); }
+        .speed-btn.selected { border-color: #00ff88; box-shadow: 0 0 15px rgba(0, 255, 136, 0.4); }
+
+        .btn-primary {
+            padding: 12px 40px;
+            font-size: 15px;
+            background: linear-gradient(145deg, #00ff88, #00cc6a);
+            border: none;
+            border-radius: 25px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn-primary:active { transform: scale(0.95); }
+
+        .btn-secondary {
+            padding: 10px 25px;
+            font-size: 13px;
+            background: linear-gradient(145deg, #ffd700, #ffaa00);
+            border: none;
+            border-radius: 20px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .btn-secondary:active { transform: scale(0.95); }
+
+        .btn-menu {
+            padding: 10px 25px;
+            font-size: 13px;
+            background: linear-gradient(145deg, #888899, #555566);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .btn-menu:active { transform: scale(0.95); }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .pause-overlay { border-color: #ffd700; }
+        .pause-overlay h2 { color: #ffd700; }
+
+        .shop-modal { border-color: #ffcc00; }
+        .shop-modal h2 { color: #ffcc00; }
+
+        .shop-coins {
+            background: rgba(255, 204, 0, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .shop-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .shop-tab {
+            flex: 1;
+            min-width: 60px;
+            padding: 8px 4px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: #aaa;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .shop-tab.active {
+            background: rgba(0, 255, 136, 0.3);
+            color: #00ff88;
+        }
+
+        .shop-items {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .shop-item {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 10px 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .shop-item:active { transform: scale(0.96); }
+        .shop-item.selected { border-color: #00ff88; background: rgba(0, 255, 136, 0.15); }
+        .shop-item.locked { opacity: 0.6; }
+        .shop-item.locked:not(.affordable) { opacity: 0.4; }
+        .shop-item.affordable { border-color: #ffcc00; }
+
+        .item-preview {
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .item-name { font-size: 10px; color: white; text-align: center; }
+        .item-price { font-size: 11px; color: #ffcc00; }
+        .item-owned { font-size: 10px; color: #00ff88; }
+        .item-bonus { font-size: 9px; color: #ff66ff; }
+
+        .multiplier-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .multiplier-item {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .multiplier-item:active { transform: scale(0.98); }
+        .multiplier-item.affordable { border-color: #ffcc00; }
+        .multiplier-item.owned { border-color: #00ff88; background: rgba(0, 255, 136, 0.1); }
+        .multiplier-item.maxed { opacity: 0.5; }
+
+        .mult-info { text-align: left; }
+        .mult-name { font-size: 14px; color: white; font-weight: bold; }
+        .mult-desc { font-size: 11px; color: #aaa; }
+        .mult-bonus { font-size: 12px; color: #ff66ff; }
+
+        .mult-action { text-align: right; }
+        .mult-price { font-size: 13px; color: #ffcc00; font-weight: bold; }
+        .mult-status { font-size: 11px; color: #00ff88; }
+
+        .close-btn {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        .new-record {
+            color: #ffd700;
+            font-size: 16px;
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            margin: 6px 0;
+        }
+
+        .difficulty-badge.slow { background: #2d5a2d; color: #88ff88; }
+        .difficulty-badge.normal { background: #5a5a2d; color: #ffff88; }
+        .difficulty-badge.fast { background: #5a4a2d; color: #ffaa44; }
+        .difficulty-badge.extreme { background: #5a2d2d; color: #ff6666; }
+
+        .snake-green { background: linear-gradient(135deg, #00ff88, #00aa55); }
+        .snake-blue { background: linear-gradient(135deg, #00aaff, #0066cc); }
+        .snake-purple { background: linear-gradient(135deg, #aa66ff, #6622cc); }
+        .snake-gold { background: linear-gradient(135deg, #ffd700, #ff9500); }
+        .snake-fire { background: linear-gradient(135deg, #ff4444, #ff8800); }
+        .snake-rainbow { background: linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #00ff00, #00ffff, #0088ff, #8800ff); }
+        .snake-ice { background: linear-gradient(135deg, #88ffff, #0088ff); }
+        .snake-pink { background: linear-gradient(135deg, #ff66aa, #ff0088); }
+
+        .bg-default { background: linear-gradient(135deg, #0a0a1a, #1a1a3a); }
+        .bg-forest { background: linear-gradient(135deg, #0a2a0a, #1a4a1a); }
+        .bg-ocean { background: linear-gradient(135deg, #0a1a2a, #1a3a5a); }
+        .bg-lava { background: linear-gradient(135deg, #2a0a0a, #4a1a0a); }
+        .bg-space { background: linear-gradient(135deg, #0a0a2a, #1a0a3a); }
+        .bg-neon { background: linear-gradient(135deg, #1a0a2a, #2a1a4a); }
+        .bg-sunset { background: linear-gradient(135deg, #2a1a0a, #4a2a1a); }
+        .bg-matrix { background: linear-gradient(135deg, #001a00, #003a00); }
+
+        .food-apple { background: radial-gradient(circle, #ff4444, #cc0000); }
+        .food-cherry { background: radial-gradient(circle, #ff2266, #aa0033); }
+        .food-orange { background: radial-gradient(circle, #ffaa00, #cc7700); }
+        .food-lemon { background: radial-gradient(circle, #ffff44, #cccc00); }
+        .food-grape { background: radial-gradient(circle, #aa44ff, #6600aa); }
+        .food-watermelon { background: linear-gradient(135deg, #44ff44, #ff4466); }
+        .food-star { background: radial-gradient(circle, #ffdd00, #ffaa00); }
+        .food-diamond { background: radial-gradient(circle, #44ffff, #0088ff); }
+        .food-heart { background: radial-gradient(circle, #ff4488, #cc0044); }
+        .food-pizza { background: radial-gradient(circle, #ffcc66, #cc8833); }
+        .food-donut { background: radial-gradient(circle, #ff88cc, #cc5599); }
+        .food-coin { background: radial-gradient(circle, #ffd700, #aa8800); }
+
+        .current-mult-badge {
+            background: rgba(255, 102, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            color: #ff66ff;
+            margin-bottom: 10px;
+        }
+
+        .total-mult {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .admin-modal { border-color: #ff0000 !important; max-width: 360px; }
+        .admin-modal h2 { color: #ff0000; }
+
+        .admin-warning {
+            background: rgba(255, 0, 0, 0.2);
+            padding: 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            color: #ff6666;
+            margin-bottom: 15px;
+        }
+
+        .admin-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        .admin-section-title {
+            font-size: 14px;
+            color: #ff6666;
+            margin-bottom: 10px;
+        }
+
+        .admin-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .admin-row:last-child { margin-bottom: 0; }
+
+        .admin-label {
+            flex: 1;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .admin-input {
+            width: 80px;
+            padding: 6px 10px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            color: white;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .admin-input:focus {
+            outline: none;
+            border-color: #ff6666;
+        }
+
+        .admin-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .admin-btn:active { transform: scale(0.95); }
+        .admin-btn.green { background: linear-gradient(145deg, #00aa66, #008844); color: white; }
+        .admin-btn.blue { background: linear-gradient(145deg, #4488ff, #2266cc); color: white; }
+        .admin-btn.orange { background: linear-gradient(145deg, #ffaa00, #cc8800); color: #1a1a2e; }
+        .admin-btn.red { background: linear-gradient(145deg, #ff4444, #cc2222); color: white; }
+        .admin-btn.purple { background: linear-gradient(145deg, #aa66ff, #8844cc); color: white; }
+        .admin-btn.full { width: 100%; padding: 10px; }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #333;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active { background: #00ff88; }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: left 0.3s;
+        }
+
+        .toggle-switch.active::after { left: 27px; }
+
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .admin-stat-box {
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .admin-stat-value { font-size: 18px; font-weight: bold; color: #00ff88; }
+        .admin-stat-label { font-size: 10px; color: #888; }
+
+        .admin-quick-coins {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .admin-quick-coins .admin-btn {
+            flex: 1;
+            min-width: 60px;
+        }
+
+        /* Подтверждение выхода */
+        .confirm-modal {
+            border-color: #ffaa00 !important;
+        }
+
+        .confirm-modal h2 {
+            color: #ffaa00;
+        }
+
+        .confirm-text {
+            font-size: 14px !important;
+            color: #ccc !important;
+            margin: 15px 0 !important;
+        }
     </style>
 </head>
 <body>
-
-<div id="topBar">
-    <div>Счёт: <span id="curScore">0</span></div>
-    <div id="coinsDisplay">💰 <span id="totalCoins">0</span></div>
-</div>
-
-<div id="gameContainer">
-    <canvas id="gameCanvas" width="340" height="340"></canvas>
-
-    <div id="menuOverlay" class="overlay">
-        <h2 style="margin-top:0">NEON SNAKE</h2>
+    <div class="game-container">
+        <div class="header">
+            <div class="stats-section">
+                <div class="stat"><span id="foodEmoji">🍎</span> <span class="score" id="score">0</span></div>
+                <div class="stat">🏆 <span class="high-score" id="highScore">0</span></div>
+                <div class="stat">💰 <span class="coins" id="coins">0</span></div>
+                <div class="stat multiplier" id="multDisplay">×1</div>
+                <div class="stat god-mode-indicator hidden" id="godModeIndicator">👑</div>
+            </div>
+            <div class="header-buttons">
+                <button class="header-btn home-btn" id="homeBtn" title="В меню">🏠</button>
+                <button class="header-btn shop-btn" id="shopBtn" title="Магазин">🛒</button>
+                <button class="header-btn" id="pauseBtn" title="Пауза">⏸️</button>
+            </div>
+        </div>
         
-        <p style="font-size: 14px; margin: 5px 0;">СЛОЖНОСТЬ</p>
-        <div class="diff-group">
-            <button class="btn-diff" id="diff-180" onclick="setDiff(180)">ЛЕГКО</button>
-            <button class="btn-diff active" id="diff-110" onclick="setDiff(110)">НОРМ</button>
-            <button class="btn-diff" id="diff-70" onclick="setDiff(70)">ХАРД</button>
-        </div>
-
-        <p style="font-size: 14px; margin: 5px 0;">МАГАЗИН СКИНОВ</p>
-        <div class="shop-grid">
-            <div class="skin-card selected" id="skin-default" onclick="selectSkin('#00ffcc', 'default')">
-                <div class="skin-preview" style="background: var(--cyan)"></div>
-                <div class="price">ВЫБРАНО</div>
-            </div>
-            <div class="skin-card" id="skin-pink" onclick="buyOrSelect('#ff007f', 100, 'pink')">
-                <div class="skin-preview" style="background: var(--pink)"></div>
-                <div class="price" id="price-pink">100 💰</div>
-            </div>
-            <div class="skin-card" id="skin-gold" onclick="buyOrSelect('#f1c40f', 500, 'gold')">
-                <div class="skin-preview" style="background: var(--gold)"></div>
-                <div class="price" id="price-gold">500 💰</div>
-            </div>
-            <div class="skin-card" id="skin-blue" onclick="buyOrSelect('#3498db', 250, 'blue')">
-                <div class="skin-preview" style="background: var(--blue)"></div>
-                <div class="price" id="price-blue">250 💰</div>
-            </div>
-        </div>
-
-        <button onclick="startGame()">ИГРАТЬ</button>
+        <canvas id="gameCanvas"></canvas>
+        <p class="swipe-hint" id="secretTrigger">👆 Свайпайте для управления</p>
     </div>
 
-    <div id="gameOverOverlay" class="overlay hidden">
-        <h2 style="color: #ff5e57">GAME OVER</h2>
-        <p>Заработано: <span id="earnedCoins">0</span> 💰</p>
-        <button onclick="showMenu()">В МЕНЮ</button>
+    <!-- Стартовый экран -->
+    <div class="modal" id="startScreen">
+        <h1>🐍 Змейка</h1>
+        <p>Выберите сложность</p>
+        
+        <div class="speed-options">
+            <button class="speed-btn slow" data-speed="200" data-name="Легко" data-mult="1">
+                <span>🐢 Легко</span><span>×1</span>
+            </button>
+            <button class="speed-btn normal selected" data-speed="140" data-name="Нормально" data-mult="2">
+                <span>🐇 Нормально</span><span>×2</span>
+            </button>
+            <button class="speed-btn fast" data-speed="90" data-name="Быстро" data-mult="3">
+                <span>🦊 Быстро</span><span>×3</span>
+            </button>
+            <button class="speed-btn extreme" data-speed="50" data-name="Экстрим" data-mult="5">
+                <span>🚀 Экстрим</span><span>×5</span>
+            </button>
+        </div>
+
+        <p class="total-mult" id="startTotalMult">Итого: ×2</p>
+        
+        <button class="btn-primary" id="startBtn">▶️ Играть</button>
     </div>
-</div>
 
-<script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-    
-    // Данные
-    let coins = parseInt(localStorage.getItem('snake_coins')) || 0;
-    let ownedSkins = JSON.parse(localStorage.getItem('snake_skins')) || ['default'];
-    let selectedColor = localStorage.getItem('snake_selected_color') || '#00ffcc';
-    let gameSpeed = 110;
+    <!-- Конец игры -->
+    <div class="modal game-over hidden" id="gameOver">
+        <h2 class="red">💀 Игра окончена!</h2>
+        <p class="final-score">Счёт: <span id="finalScore">0</span></p>
+        <p class="coins-earned">+<span id="coinsEarned">0</span> 💰</p>
+        <p class="multiplier-info" id="multBreakdown"></p>
+        <p id="newRecord" class="new-record" style="display: none;">🎉 Новый рекорд! 🎉</p>
+        <div id="difficultyBadge" class="difficulty-badge normal">Нормально</div>
+        
+        <div class="btn-row">
+            <button class="btn-menu" id="menuFromGameOver">🏠 Меню</button>
+            <button class="btn-primary" id="restartBtn">🔄 Заново</button>
+        </div>
+    </div>
 
-    function updateUI() {
-        document.getElementById('totalCoins').innerText = coins;
-        ownedSkins.forEach(id => {
-            const priceTag = document.getElementById('price-' + id);
-            if(priceTag) priceTag.innerText = "КУПЛЕНО";
-            document.getElementById('skin-' + id).classList.add('owned');
+    <!-- Пауза -->
+    <div class="modal pause-overlay hidden" id="pauseOverlay">
+        <h2>⏸️ Пауза</h2>
+        <p>Игра приостановлена</p>
+        <p style="font-size: 12px; color: #888; margin-top: 5px;">
+            Счёт: <span id="pauseScore">0</span> | 
+            Монеты: +<span id="pauseCoins">0</span>
+        </p>
+        
+        <div class="btn-row">
+            <button class="btn-menu" id="menuFromPause">🏠 Меню</button>
+            <button class="btn-secondary" id="resumeBtn">▶️ Продолжить</button>
+        </div>
+    </div>
+
+    <!-- Подтверждение выхода -->
+    <div class="modal confirm-modal hidden" id="confirmModal">
+        <h2>⚠️ Выйти в меню?</h2>
+        <p class="confirm-text">Текущий прогресс будет сохранён.<br>Вы заработали <span id="confirmCoins">0</span> 💰</p>
+        
+        <div class="btn-row">
+            <button class="btn-menu" id="cancelExit">❌ Отмена</button>
+            <button class="btn-secondary" id="confirmExit">✓ Выйти</button>
+        </div>
+    </div>
+
+    <!-- Магазин -->
+    <div class="modal shop-modal hidden" id="shopModal">
+        <button class="close-btn" id="closeShop">✕</button>
+        <h2>🛒 Магазин</h2>
+        <div class="shop-coins">💰 <span id="shopCoins">0</span></div>
+        <div class="current-mult-badge">Множитель: <span id="currentMultBadge">×1</span></div>
+        
+        <div class="shop-tabs">
+            <button class="shop-tab active" data-tab="multipliers">💎 Множ.</button>
+            <button class="shop-tab" data-tab="foods">🍎 Еда</button>
+            <button class="shop-tab" data-tab="skins">🐍 Змейки</button>
+            <button class="shop-tab" data-tab="backgrounds">🎨 Фоны</button>
+        </div>
+        
+        <div id="shopContent"></div>
+        
+        <button class="btn-secondary" id="closeShopBtn">Закрыть</button>
+    </div>
+
+    <!-- Админ-панель -->
+    <div class="modal admin-modal hidden" id="adminModal">
+        <button class="close-btn" id="closeAdmin">✕</button>
+        <h2>🔧 Админ-панель</h2>
+        <div class="admin-warning">⚠️ Использование читов может испортить игровой опыт!</div>
+
+        <div class="admin-stats">
+            <div class="admin-stat-box">
+                <div class="admin-stat-value" id="adminCoins">0</div>
+                <div class="admin-stat-label">Монеты</div>
+            </div>
+            <div class="admin-stat-box">
+                <div class="admin-stat-value" id="adminHighScore">0</div>
+                <div class="admin-stat-label">Рекорд</div>
+            </div>
+        </div>
+
+        <div class="admin-section">
+            <div class="admin-section-title">💰 Монеты</div>
+            <div class="admin-quick-coins">
+                <button class="admin-btn green" onclick="adminAddCoins(100)">+100</button>
+                <button class="admin-btn green" onclick="adminAddCoins(500)">+500</button>
+                <button class="admin-btn green" onclick="adminAddCoins(1000)">+1K</button>
+                <button class="admin-btn green" onclick="adminAddCoins(10000)">+10K</button>
+            </div>
+            <div class="admin-row" style="margin-top: 10px;">
+                <input type="number" class="admin-input" id="customCoins" placeholder="Кол-во">
+                <button class="admin-btn blue" onclick="adminAddCoins(parseInt(document.getElementById('customCoins').value) || 0)">Добавить</button>
+                <button class="admin-btn orange" onclick="adminSetCoins(parseInt(document.getElementById('customCoins').value) || 0)">Уст.</button>
+            </div>
+        </div>
+
+        <div class="admin-section">
+            <div class="admin-section-title">🎮 Игровые читы</div>
+            <div class="admin-row">
+                <span class="admin-label">👑 Бессмертие</span>
+                <div class="toggle-switch" id="godModeToggle" onclick="toggleGodMode()"></div>
+            </div>
+            <div class="admin-row">
+                <span class="admin-label">🐌 Замедление</span>
+                <div class="toggle-switch" id="slowModeToggle" onclick="toggleSlowMode()"></div>
+            </div>
+            <div class="admin-row">
+                <span class="admin-label">⚡ Супер скорость</span>
+                <div class="toggle-switch" id="fastModeToggle" onclick="toggleFastMode()"></div>
+            </div>
+        </div>
+
+        <div class="admin-section">
+            <div class="admin-section-title">⚡ Быстрые действия</div>
+            <button class="admin-btn purple full" onclick="adminGrowSnake()">🐍 Вырастить змейку (+5)</button>
+            <button class="admin-btn blue full" style="margin-top:6px" onclick="adminTeleportFood()">🍎 Телепортировать еду</button>
+            <button class="admin-btn orange full" style="margin-top:6px" onclick="adminAddScore(100)">🎯 +100 очков</button>
+        </div>
+
+        <div class="admin-section">
+            <div class="admin-section-title">🔓 Разблокировка</div>
+            <button class="admin-btn purple full" onclick="adminUnlockAll()">🌟 Разблокировать ВСЁ + 50K</button>
+        </div>
+
+        <div class="admin-section">
+            <div class="admin-section-title">🗑️ Сброс</div>
+            <button class="admin-btn red full" onclick="adminResetProgress()">⚠️ Сбросить прогресс</button>
+        </div>
+
+        <button class="btn-secondary" id="closeAdminBtn" style="margin-top: 15px;">Закрыть</button>
+    </div>
+
+    <script>
+        // ===== ДАННЫЕ МАГАЗИНА =====
+        const MULTIPLIERS = [
+            { id: 'mult1', name: 'Стартовый', value: 1, price: 0, desc: 'Базовый множитель' },
+            { id: 'mult2', name: 'Бронзовый', value: 1.5, price: 100, desc: '+50% к монетам' },
+            { id: 'mult3', name: 'Серебряный', value: 2, price: 300, desc: '+100% к монетам' },
+            { id: 'mult4', name: 'Золотой', value: 3, price: 600, desc: '+200% к монетам' },
+            { id: 'mult5', name: 'Платиновый', value: 5, price: 1200, desc: '+400% к монетам' },
+            { id: 'mult6', name: 'Алмазный', value: 8, price: 2500, desc: '+700% к монетам' },
+            { id: 'mult7', name: 'Легендарный', value: 12, price: 5000, desc: '+1100% к монетам' },
+            { id: 'mult8', name: 'Мифический', value: 20, price: 10000, desc: '+1900% к монетам' }
+        ];
+
+        const FOODS = [
+            { id: 'apple', name: 'Яблоко', emoji: '🍎', price: 0, color: '#ff4444', bonus: 0, class: 'food-apple' },
+            { id: 'cherry', name: 'Вишня', emoji: '🍒', price: 30, color: '#ff2266', bonus: 0, class: 'food-cherry' },
+            { id: 'orange', name: 'Апельсин', emoji: '🍊', price: 50, color: '#ffaa00', bonus: 0, class: 'food-orange' },
+            { id: 'lemon', name: 'Лимон', emoji: '🍋', price: 50, color: '#ffff44', bonus: 0, class: 'food-lemon' },
+            { id: 'grape', name: 'Виноград', emoji: '🍇', price: 75, color: '#aa44ff', bonus: 1, class: 'food-grape' },
+            { id: 'watermelon', name: 'Арбуз', emoji: '🍉', price: 100, color: '#44ff44', bonus: 1, class: 'food-watermelon' },
+            { id: 'pizza', name: 'Пицца', emoji: '🍕', price: 150, color: '#ffcc66', bonus: 2, class: 'food-pizza' },
+            { id: 'donut', name: 'Пончик', emoji: '🍩', price: 150, color: '#ff88cc', bonus: 2, class: 'food-donut' },
+            { id: 'star', name: 'Звезда', emoji: '⭐', price: 250, color: '#ffdd00', bonus: 3, class: 'food-star' },
+            { id: 'heart', name: 'Сердце', emoji: '❤️', price: 300, color: '#ff4488', bonus: 3, class: 'food-heart' },
+            { id: 'diamond', name: 'Алмаз', emoji: '💎', price: 500, color: '#44ffff', bonus: 5, class: 'food-diamond' },
+            { id: 'coin', name: 'Монета', emoji: '🪙', price: 1000, color: '#ffd700', bonus: 10, class: 'food-coin' }
+        ];
+
+        const SKINS = [
+            { id: 'green', name: 'Зелёный', price: 0, colors: ['#00ff88', '#00aa55'], class: 'snake-green' },
+            { id: 'blue', name: 'Синий', price: 50, colors: ['#00aaff', '#0066cc'], class: 'snake-blue' },
+            { id: 'purple', name: 'Фиолет', price: 75, colors: ['#aa66ff', '#6622cc'], class: 'snake-purple' },
+            { id: 'pink', name: 'Розовый', price: 75, colors: ['#ff66aa', '#ff0088'], class: 'snake-pink' },
+            { id: 'gold', name: 'Золотой', price: 100, colors: ['#ffd700', '#ff9500'], class: 'snake-gold' },
+            { id: 'fire', name: 'Огненный', price: 150, colors: ['#ff4444', '#ff8800'], class: 'snake-fire' },
+            { id: 'ice', name: 'Ледяной', price: 150, colors: ['#88ffff', '#0088ff'], class: 'snake-ice' },
+            { id: 'rainbow', name: 'Радуга', price: 300, colors: ['rainbow'], class: 'snake-rainbow' }
+        ];
+
+        const BACKGROUNDS = [
+            { id: 'default', name: 'Стандарт', price: 0, colors: ['#0a0a1a', '#1a1a3a'], border: '#00ff88', class: 'bg-default' },
+            { id: 'forest', name: 'Лес', price: 50, colors: ['#0a2a0a', '#1a4a1a'], border: '#44ff44', class: 'bg-forest' },
+            { id: 'ocean', name: 'Океан', price: 75, colors: ['#0a1a2a', '#1a3a5a'], border: '#44aaff', class: 'bg-ocean' },
+            { id: 'lava', name: 'Лава', price: 100, colors: ['#2a0a0a', '#4a1a0a'], border: '#ff6644', class: 'bg-lava' },
+            { id: 'space', name: 'Космос', price: 100, colors: ['#0a0a2a', '#1a0a3a'], border: '#aa66ff', class: 'bg-space' },
+            { id: 'sunset', name: 'Закат', price: 125, colors: ['#2a1a0a', '#4a2a1a'], border: '#ffaa44', class: 'bg-sunset' },
+            { id: 'matrix', name: 'Матрица', price: 150, colors: ['#001a00', '#003a00'], border: '#00ff00', class: 'bg-matrix' },
+            { id: 'neon', name: 'Неон', price: 200, colors: ['#1a0a2a', '#2a1a4a'], border: '#ff00ff', class: 'bg-neon' }
+        ];
+
+        // ===== ИГРОВЫЕ ПЕРЕМЕННЫЕ =====
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const size = Math.min(window.innerWidth - 40, 350);
+        canvas.width = size;
+        canvas.height = size;
+        
+        const gridSize = 20;
+        const tileCount = Math.floor(size / gridSize);
+        
+        let snake = [];
+        let food = {};
+        let direction = { x: 1, y: 0 };
+        let nextDirection = { x: 1, y: 0 };
+        let score = 0;
+        let coinsThisGame = 0;
+        let applesThisGame = 0;
+        let gameLoop = null;
+        let baseSpeed = 140;
+        let gameSpeed = 140;
+        let originalSpeed = 140;
+        let difficultyMult = 2;
+        let isRunning = false;
+        let isPaused = false;
+        let selectedDifficulty = 'Нормально';
+        let selectedSpeedClass = 'normal';
+        let currentShopTab = 'multipliers';
+
+        let godMode = false;
+        let slowMode = false;
+        let fastMode = false;
+
+        let secretTapCount = 0;
+        let secretTapTimer = null;
+
+        // ===== СОХРАНЁННЫЕ ДАННЫЕ =====
+        let playerData = loadPlayerData();
+
+        function loadPlayerData() {
+            const saved = localStorage.getItem('snakePlayerData5');
+            if (saved) return JSON.parse(saved);
+            return {
+                coins: 0,
+                highScore: 0,
+                ownedSkins: ['green'],
+                ownedBackgrounds: ['default'],
+                ownedFoods: ['apple'],
+                ownedMultipliers: ['mult1'],
+                selectedSkin: 'green',
+                selectedBackground: 'default',
+                selectedFood: 'apple',
+                selectedMultiplier: 'mult1'
+            };
+        }
+
+        function savePlayerData() {
+            localStorage.setItem('snakePlayerData5', JSON.stringify(playerData));
+        }
+
+        function getPlayerMultiplier() {
+            const mult = MULTIPLIERS.find(m => m.id === playerData.selectedMultiplier);
+            return mult ? mult.value : 1;
+        }
+
+        function getFoodBonus() {
+            const food = FOODS.find(f => f.id === playerData.selectedFood);
+            return food ? food.bonus : 0;
+        }
+
+        function getTotalMultiplier() {
+            return difficultyMult * getPlayerMultiplier();
+        }
+
+        function getSelectedFood() {
+            return FOODS.find(f => f.id === playerData.selectedFood) || FOODS[0];
+        }
+
+        // ===== DOM ЭЛЕМЕНТЫ =====
+        const scoreEl = document.getElementById('score');
+        const highScoreEl = document.getElementById('highScore');
+        const coinsEl = document.getElementById('coins');
+        const multDisplayEl = document.getElementById('multDisplay');
+        const foodEmojiEl = document.getElementById('foodEmoji');
+        const godModeIndicatorEl = document.getElementById('godModeIndicator');
+        const gameOverEl = document.getElementById('gameOver');
+        const finalScoreEl = document.getElementById('finalScore');
+        const coinsEarnedEl = document.getElementById('coinsEarned');
+        const multBreakdownEl = document.getElementById('multBreakdown');
+        const startScreenEl = document.getElementById('startScreen');
+        const startTotalMultEl = document.getElementById('startTotalMult');
+        const pauseOverlayEl = document.getElementById('pauseOverlay');
+        const pauseBtnEl = document.getElementById('pauseBtn');
+        const newRecordEl = document.getElementById('newRecord');
+        const difficultyBadgeEl = document.getElementById('difficultyBadge');
+        const shopModal = document.getElementById('shopModal');
+        const shopCoinsEl = document.getElementById('shopCoins');
+        const shopContentEl = document.getElementById('shopContent');
+        const currentMultBadgeEl = document.getElementById('currentMultBadge');
+        const adminModal = document.getElementById('adminModal');
+        const confirmModal = document.getElementById('confirmModal');
+        const speedBtns = document.querySelectorAll('.speed-btn');
+        const shopTabs = document.querySelectorAll('.shop-tab');
+
+        function updateUI() {
+            highScoreEl.textContent = playerData.highScore;
+            coinsEl.textContent = playerData.coins;
+            foodEmojiEl.textContent = getSelectedFood().emoji;
+            updateMultDisplay();
+        }
+
+        function updateMultDisplay() {
+            const total = getTotalMultiplier();
+            const foodBonus = getFoodBonus();
+            let text = `×${total}`;
+            if (foodBonus > 0) text += `+${foodBonus}`;
+            multDisplayEl.textContent = text;
+            startTotalMultEl.textContent = `×${total} множ. + ${foodBonus} бонус`;
+        }
+
+        updateUI();
+
+        // ===== ФУНКЦИЯ ВЫХОДА В МЕНЮ =====
+        function showExitConfirm() {
+            if (!isRunning) {
+                goToMenu();
+                return;
+            }
+            
+            if (!isPaused) togglePause();
+            
+            document.getElementById('confirmCoins').textContent = coinsThisGame;
+            confirmModal.classList.remove('hidden');
+            pauseOverlayEl.classList.add('hidden');
+        }
+
+        function goToMenu() {
+            // Сохраняем заработанные монеты
+            if (isRunning && coinsThisGame > 0) {
+                playerData.coins += coinsThisGame;
+                
+                if (score > playerData.highScore) {
+                    playerData.highScore = score;
+                    highScoreEl.textContent = playerData.highScore;
+                }
+                
+                savePlayerData();
+                coinsEl.textContent = playerData.coins;
+            }
+            
+            // Останавливаем игру
+            isRunning = false;
+            isPaused = false;
+            clearInterval(gameLoop);
+            
+            // Скрываем все модалки
+            confirmModal.classList.add('hidden');
+            pauseOverlayEl.classList.add('hidden');
+            gameOverEl.classList.add('hidden');
+            shopModal.classList.add('hidden');
+            adminModal.classList.add('hidden');
+            
+            // Показываем меню
+            startScreenEl.classList.remove('hidden');
+            
+            updatePauseButton();
+            updateUI();
+            
+            // Перерисовываем поле
+            initGame();
+            draw();
+        }
+
+        function cancelExit() {
+            confirmModal.classList.add('hidden');
+            pauseOverlayEl.classList.remove('hidden');
+        }
+
+        // ===== АДМИН ПАНЕЛЬ =====
+        function openAdmin() {
+            document.getElementById('adminCoins').textContent = playerData.coins;
+            document.getElementById('adminHighScore').textContent = playerData.highScore;
+            updateAdminToggles();
+            adminModal.classList.remove('hidden');
+            if (isRunning && !isPaused) togglePause();
+        }
+
+        function closeAdmin() {
+            adminModal.classList.add('hidden');
+        }
+
+        function updateAdminToggles() {
+            document.getElementById('godModeToggle').classList.toggle('active', godMode);
+            document.getElementById('slowModeToggle').classList.toggle('active', slowMode);
+            document.getElementById('fastModeToggle').classList.toggle('active', fastMode);
+        }
+
+        function adminAddCoins(amount) {
+            playerData.coins += amount;
+            savePlayerData();
+            updateUI();
+            document.getElementById('adminCoins').textContent = playerData.coins;
+            shopCoinsEl.textContent = playerData.coins;
+            vibrate(50);
+        }
+
+        function adminSetCoins(amount) {
+            playerData.coins = Math.max(0, amount);
+            savePlayerData();
+            updateUI();
+            document.getElementById('adminCoins').textContent = playerData.coins;
+            shopCoinsEl.textContent = playerData.coins;
+            vibrate(50);
+        }
+
+        function toggleGodMode() {
+            godMode = !godMode;
+            godModeIndicatorEl.classList.toggle('hidden', !godMode);
+            updateAdminToggles();
+            vibrate(godMode ? 100 : 30);
+        }
+
+        function toggleSlowMode() {
+            slowMode = !slowMode;
+            if (slowMode) fastMode = false;
+            updateGameSpeed();
+            updateAdminToggles();
+            vibrate(30);
+        }
+
+        function toggleFastMode() {
+            fastMode = !fastMode;
+            if (fastMode) slowMode = false;
+            updateGameSpeed();
+            updateAdminToggles();
+            vibrate(30);
+        }
+
+        function updateGameSpeed() {
+            if (!isRunning) return;
+            let newSpeed = originalSpeed;
+            if (slowMode) newSpeed = originalSpeed * 3;
+            if (fastMode) newSpeed = Math.max(30, originalSpeed / 2);
+            gameSpeed = newSpeed;
+            clearInterval(gameLoop);
+            gameLoop = setInterval(update, gameSpeed);
+        }
+
+        function adminGrowSnake() {
+            if (!isRunning) return;
+            for (let i = 0; i < 5; i++) {
+                const tail = snake[snake.length - 1];
+                snake.push({ ...tail });
+            }
+            score += 50;
+            scoreEl.textContent = score;
+            draw();
+            vibrate(50);
+        }
+
+        function adminTeleportFood() {
+            if (!isRunning) return;
+            const head = snake[0];
+            food = { x: head.x + direction.x, y: head.y + direction.y };
+            if (food.x < 0) food.x = 0;
+            if (food.x >= tileCount) food.x = tileCount - 1;
+            if (food.y < 0) food.y = 0;
+            if (food.y >= tileCount) food.y = tileCount - 1;
+            draw();
+            vibrate(50);
+        }
+
+        function adminAddScore(amount) {
+            score += amount;
+            scoreEl.textContent = score;
+            vibrate(50);
+        }
+
+        function adminUnlockAll() {
+            SKINS.forEach(s => { if (!playerData.ownedSkins.includes(s.id)) playerData.ownedSkins.push(s.id); });
+            BACKGROUNDS.forEach(b => { if (!playerData.ownedBackgrounds.includes(b.id)) playerData.ownedBackgrounds.push(b.id); });
+            FOODS.forEach(f => { if (!playerData.ownedFoods.includes(f.id)) playerData.ownedFoods.push(f.id); });
+            MULTIPLIERS.forEach(m => { if (!playerData.ownedMultipliers.includes(m.id)) playerData.ownedMultipliers.push(m.id); });
+            playerData.selectedMultiplier = 'mult8';
+            playerData.coins += 50000;
+            savePlayerData();
+            updateUI();
+            document.getElementById('adminCoins').textContent = playerData.coins;
+            vibrate(100);
+            alert('Всё разблокировано + 50,000 монет!');
+        }
+
+        function adminResetProgress() {
+            if (confirm('Вы уверены? Весь прогресс будет удалён!')) {
+                localStorage.removeItem('snakePlayerData5');
+                playerData = loadPlayerData();
+                godMode = false;
+                slowMode = false;
+                fastMode = false;
+                updateUI();
+                updateAdminToggles();
+                godModeIndicatorEl.classList.add('hidden');
+                document.getElementById('adminCoins').textContent = playerData.coins;
+                document.getElementById('adminHighScore').textContent = playerData.highScore;
+                vibrate([100, 50, 100]);
+                alert('Прогресс сброшен!');
+            }
+        }
+
+        document.getElementById('secretTrigger').addEventListener('click', () => {
+            secretTapCount++;
+            clearTimeout(secretTapTimer);
+            if (secretTapCount >= 5) {
+                secretTapCount = 0;
+                openAdmin();
+            } else {
+                secretTapTimer = setTimeout(() => secretTapCount = 0, 2000);
+            }
         });
-    }
 
-    function setDiff(speed) {
-        gameSpeed = speed;
-        document.querySelectorAll('.btn-diff').forEach(b => b.classList.remove('active'));
-        document.getElementById('diff-' + speed).classList.add('active');
-    }
+        window.openAdmin = openAdmin;
+        document.getElementById('closeAdmin').addEventListener('click', closeAdmin);
+        document.getElementById('closeAdminBtn').addEventListener('click', closeAdmin);
 
-    function buyOrSelect(color, price, id) {
-        if (ownedSkins.includes(id)) {
-            selectSkin(color, id);
-        } else if (coins >= price) {
-            coins -= price;
-            ownedSkins.push(id);
-            localStorage.setItem('snake_coins', coins);
-            localStorage.setItem('snake_skins', JSON.stringify(ownedSkins));
-            selectSkin(color, id);
+        // ===== МАГАЗИН =====
+        function openShop() {
+            if (isRunning && !isPaused) togglePause();
+            shopCoinsEl.textContent = playerData.coins;
+            currentMultBadgeEl.textContent = `×${getPlayerMultiplier()} +${getFoodBonus()}`;
+            renderShopContent();
+            shopModal.classList.remove('hidden');
+        }
+
+        function closeShop() {
+            shopModal.classList.add('hidden');
+            updateMultDisplay();
+            updateUI();
+            draw();
+        }
+
+        function renderShopContent() {
+            switch(currentShopTab) {
+                case 'multipliers': renderMultipliers(); break;
+                case 'foods': renderFoods(); break;
+                case 'skins': renderItems('skins'); break;
+                case 'backgrounds': renderItems('backgrounds'); break;
+            }
+        }
+
+        function renderMultipliers() {
+            shopContentEl.innerHTML = `
+                <div class="multiplier-section">
+                    ${MULTIPLIERS.map((mult, index) => {
+                        const isOwned = playerData.ownedMultipliers.includes(mult.id);
+                        const isSelected = playerData.selectedMultiplier === mult.id;
+                        const canAfford = playerData.coins >= mult.price;
+                        const prevOwned = index === 0 || playerData.ownedMultipliers.includes(MULTIPLIERS[index - 1].id);
+                        const canBuy = !isOwned && canAfford && prevOwned;
+                        
+                        let statusClass = isSelected ? 'owned' : isOwned ? 'owned' : canBuy ? 'affordable' : 'maxed';
+
+                        return `
+                            <div class="multiplier-item ${statusClass}" data-id="${mult.id}">
+                                <div class="mult-info">
+                                    <div class="mult-name">${mult.name}</div>
+                                    <div class="mult-desc">${mult.desc}</div>
+                                    <div class="mult-bonus">×${mult.value}</div>
+                                </div>
+                                <div class="mult-action">
+                                    ${isOwned 
+                                        ? `<div class="mult-status">${isSelected ? '✓ Активен' : 'Выбрать'}</div>`
+                                        : prevOwned 
+                                            ? `<div class="mult-price">💰 ${mult.price}</div>`
+                                            : `<div class="mult-status" style="color:#666">🔒</div>`
+                                    }
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            document.querySelectorAll('.multiplier-item').forEach(el => {
+                el.addEventListener('click', () => handleMultiplierClick(el.dataset.id));
+            });
+        }
+
+        function handleMultiplierClick(id) {
+            const index = MULTIPLIERS.findIndex(m => m.id === id);
+            const mult = MULTIPLIERS[index];
+            const isOwned = playerData.ownedMultipliers.includes(id);
+            const prevOwned = index === 0 || playerData.ownedMultipliers.includes(MULTIPLIERS[index - 1].id);
+
+            if (isOwned) {
+                playerData.selectedMultiplier = id;
+                savePlayerData();
+                currentMultBadgeEl.textContent = `×${getPlayerMultiplier()} +${getFoodBonus()}`;
+                renderMultipliers();
+                vibrate(30);
+            } else if (playerData.coins >= mult.price && prevOwned) {
+                playerData.coins -= mult.price;
+                playerData.ownedMultipliers.push(id);
+                playerData.selectedMultiplier = id;
+                savePlayerData();
+                coinsEl.textContent = playerData.coins;
+                shopCoinsEl.textContent = playerData.coins;
+                currentMultBadgeEl.textContent = `×${getPlayerMultiplier()} +${getFoodBonus()}`;
+                renderMultipliers();
+                vibrate(100);
+            }
+        }
+
+        function renderFoods() {
+            shopContentEl.innerHTML = `
+                <div class="shop-items">
+                    ${FOODS.map(food => {
+                        const isOwned = playerData.ownedFoods.includes(food.id);
+                        const isSelected = playerData.selectedFood === food.id;
+                        const canAfford = playerData.coins >= food.price;
+                        
+                        let statusClass = isSelected ? 'selected' : !isOwned && canAfford ? 'locked affordable' : !isOwned ? 'locked' : '';
+
+                        return `
+                            <div class="shop-item ${statusClass}" data-id="${food.id}" data-type="foods">
+                                <div class="item-preview ${food.class}">${food.emoji}</div>
+                                <div class="item-name">${food.name}</div>
+                                ${food.bonus > 0 ? `<div class="item-bonus">+${food.bonus} 💰</div>` : ''}
+                                ${isOwned 
+                                    ? `<div class="item-owned">${isSelected ? '✓ Выбрано' : 'Выбрать'}</div>`
+                                    : `<div class="item-price">💰 ${food.price}</div>`
+                                }
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            document.querySelectorAll('.shop-item[data-type="foods"]').forEach(el => {
+                el.addEventListener('click', () => handleFoodClick(el.dataset.id));
+            });
+        }
+
+        function handleFoodClick(id) {
+            const food = FOODS.find(f => f.id === id);
+            const isOwned = playerData.ownedFoods.includes(id);
+
+            if (isOwned) {
+                playerData.selectedFood = id;
+                savePlayerData();
+                updateUI();
+                currentMultBadgeEl.textContent = `×${getPlayerMultiplier()} +${getFoodBonus()}`;
+                renderFoods();
+                vibrate(30);
+            } else if (playerData.coins >= food.price) {
+                playerData.coins -= food.price;
+                playerData.ownedFoods.push(id);
+                playerData.selectedFood = id;
+                savePlayerData();
+                coinsEl.textContent = playerData.coins;
+                shopCoinsEl.textContent = playerData.coins;
+                updateUI();
+                currentMultBadgeEl.textContent = `×${getPlayerMultiplier()} +${getFoodBonus()}`;
+                renderFoods();
+                vibrate(100);
+            }
+        }
+
+        function renderItems(type) {
+            const items = type === 'skins' ? SKINS : BACKGROUNDS;
+            const owned = type === 'skins' ? playerData.ownedSkins : playerData.ownedBackgrounds;
+            const selected = type === 'skins' ? playerData.selectedSkin : playerData.selectedBackground;
+
+            shopContentEl.innerHTML = `
+                <div class="shop-items">
+                    ${items.map(item => {
+                        const isOwned = owned.includes(item.id);
+                        const isSelected = selected === item.id;
+                        const canAfford = playerData.coins >= item.price;
+                        
+                        let statusClass = isSelected ? 'selected' : !isOwned && canAfford ? 'locked affordable' : !isOwned ? 'locked' : '';
+
+                        return `
+                            <div class="shop-item ${statusClass}" data-id="${item.id}" data-type="${type}">
+                                <div class="item-preview ${item.class}">${type === 'skins' ? '🐍' : '🎨'}</div>
+                                <div class="item-name">${item.name}</div>
+                                ${isOwned 
+                                    ? `<div class="item-owned">${isSelected ? '✓ Выбрано' : 'Выбрать'}</div>`
+                                    : `<div class="item-price">💰 ${item.price}</div>`
+                                }
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            document.querySelectorAll(`.shop-item[data-type="${type}"]`).forEach(el => {
+                el.addEventListener('click', () => handleItemClick(el.dataset.id, type));
+            });
+        }
+
+        function handleItemClick(id, type) {
+            const items = type === 'skins' ? SKINS : BACKGROUNDS;
+            const item = items.find(i => i.id === id);
+            const owned = type === 'skins' ? playerData.ownedSkins : playerData.ownedBackgrounds;
+
+            if (owned.includes(id)) {
+                if (type === 'skins') playerData.selectedSkin = id;
+                else playerData.selectedBackground = id;
+                savePlayerData();
+                renderItems(type);
+                updateCanvasStyle();
+                vibrate(30);
+            } else if (playerData.coins >= item.price) {
+                playerData.coins -= item.price;
+                owned.push(id);
+                if (type === 'skins') playerData.selectedSkin = id;
+                else playerData.selectedBackground = id;
+                savePlayerData();
+                coinsEl.textContent = playerData.coins;
+                shopCoinsEl.textContent = playerData.coins;
+                renderItems(type);
+                updateCanvasStyle();
+                vibrate(100);
+            }
+        }
+
+        function updateCanvasStyle() {
+            const bg = BACKGROUNDS.find(b => b.id === playerData.selectedBackground);
+            canvas.style.borderColor = bg.border;
+            canvas.style.boxShadow = `0 0 30px ${bg.border}40`;
+        }
+
+        // ===== ИГРОВАЯ ЛОГИКА =====
+        function initGame() {
+            const startX = Math.floor(tileCount / 2);
+            const startY = Math.floor(tileCount / 2);
+            
+            snake = [
+                { x: startX, y: startY },
+                { x: startX - 1, y: startY },
+                { x: startX - 2, y: startY }
+            ];
+            
+            direction = { x: 1, y: 0 };
+            nextDirection = { x: 1, y: 0 };
+            score = 0;
+            coinsThisGame = 0;
+            applesThisGame = 0;
+            scoreEl.textContent = score;
+            originalSpeed = baseSpeed;
+            gameSpeed = baseSpeed;
+            
+            if (slowMode) gameSpeed = baseSpeed * 3;
+            if (fastMode) gameSpeed = Math.max(30, baseSpeed / 2);
+            
+            spawnFood();
+            updateCanvasStyle();
+            updateMultDisplay();
             updateUI();
         }
-    }
 
-    function selectSkin(color, id) {
-        selectedColor = color;
-        localStorage.setItem('snake_selected_color', color);
-        document.querySelectorAll('.skin-card').forEach(c => c.classList.remove('selected'));
-        document.getElementById('skin-' + id).classList.add('selected');
-    }
-
-    // ИГРОВАЯ ЛОГИКА
-    let snake, food, dx, dy, score, gameLoop, gameActive = false;
-    const gridSize = 20, tileCount = 17;
-
-    function startGame() {
-        document.getElementById('menuOverlay').classList.add('hidden');
-        document.getElementById('gameOverOverlay').classList.add('hidden');
-        snake = [{x:8, y:8}, {x:7, y:8}, {x:6, y:8}];
-        food = {x:5, y:5}; dx = 1; dy = 0; score = 0;
-        document.getElementById('curScore').innerText = "0";
-        gameActive = true;
-        main();
-    }
-
-    function main() {
-        if(!gameActive) return;
-        gameLoop = setTimeout(() => {
-            if (move()) { draw(); main(); }
-            else { endGame(); }
-        }, gameSpeed);
-    }
-
-    function move() {
-        const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-        if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) return false;
-        if (snake.some(s => s.x === head.x && s.y === head.y)) return false;
-        
-        snake.unshift(head);
-        if (head.x === food.x && head.y === food.y) {
-            score += 10;
-            document.getElementById('curScore').innerText = score;
-            createFood();
-        } else { snake.pop(); }
-        return true;
-    }
-
-    function createFood() {
-        food = {x: Math.floor(Math.random()*tileCount), y: Math.floor(Math.random()*tileCount)};
-        if(snake.some(s => s.x === food.x && s.y === food.y)) createFood();
-    }
-
-    function draw() {
-        ctx.clearRect(0,0,340,340);
-        
-        // Еда
-        ctx.fillStyle = "#ff5e57"; ctx.shadowBlur = 15; ctx.shadowColor = "#ff5e57";
-        ctx.beginPath(); ctx.arc(food.x*20+10, food.y*20+10, 8, 0, Math.PI*2); ctx.fill();
-
-        // Змейка
-        snake.forEach((p, i) => {
-            ctx.fillStyle = i === 0 ? "#fff" : selectedColor;
-            ctx.shadowBlur = 15; ctx.shadowColor = selectedColor;
-            
-            // Рисуем красивые скругленные сегменты
-            ctx.beginPath();
-            ctx.roundRect(p.x*20+1, p.y*20+1, 18, 18, 6);
-            ctx.fill();
-        });
-        ctx.shadowBlur = 0;
-    }
-
-    function endGame() {
-        gameActive = false;
-        coins += score;
-        localStorage.setItem('snake_coins', coins);
-        document.getElementById('earnedCoins').innerText = score;
-        document.getElementById('gameOverOverlay').classList.remove('hidden');
-        updateUI();
-    }
-
-    function showMenu() {
-        document.getElementById('gameOverOverlay').classList.add('hidden');
-        document.getElementById('menuOverlay').classList.remove('hidden');
-    }
-
-    // УПРАВЛЕНИЕ (СВАЙПЫ)
-    let tsX, tsY;
-    window.addEventListener('touchstart', e => { tsX = e.touches[0].clientX; tsY = e.touches[0].clientY; });
-    window.addEventListener('touchend', e => {
-        if(!gameActive) return;
-        const x = e.changedTouches[0].clientX - tsX, y = e.changedTouches[0].clientY - tsY;
-        if (Math.abs(x) > Math.abs(y)) {
-            if(x > 30 && dx === 0){ dx=1; dy=0; } else if(x < -30 && dx === 0){ dx=-1; dy=0; }
-        } else {
-            if(y > 30 && dy === 0){ dy=1; dx=0; } else if(y < -30 && dy === 0){ dy=-1; dx=0; }
+        function spawnFood() {
+            do {
+                food = {
+                    x: Math.floor(Math.random() * tileCount),
+                    y: Math.floor(Math.random() * tileCount)
+                };
+            } while (snake.some(segment => segment.x === food.x && segment.y === food.y));
         }
-    });
 
-    updateUI();
-</script>
+        function update() {
+            if (!isRunning || isPaused) return;
+
+            direction = { ...nextDirection };
+
+            const head = {
+                x: snake[0].x + direction.x,
+                y: snake[0].y + direction.y
+            };
+
+            if (!godMode) {
+                if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                    gameOver();
+                    return;
+                }
+                if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+                    gameOver();
+                    return;
+                }
+            } else {
+                if (head.x < 0) head.x = tileCount - 1;
+                if (head.x >= tileCount) head.x = 0;
+                if (head.y < 0) head.y = tileCount - 1;
+                if (head.y >= tileCount) head.y = 0;
+            }
+
+            snake.unshift(head);
+
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                applesThisGame++;
+                coinsThisGame += Math.floor(getTotalMultiplier()) + getFoodBonus();
+                scoreEl.textContent = score;
+                
+                if (!slowMode && !fastMode && gameSpeed > 50) {
+                    gameSpeed -= 1;
+                    originalSpeed = gameSpeed;
+                    clearInterval(gameLoop);
+                    gameLoop = setInterval(update, gameSpeed);
+                }
+                
+                spawnFood();
+                vibrate(50);
+            } else {
+                snake.pop();
+            }
+
+            draw();
+        }
+
+        function draw() {
+            const bg = BACKGROUNDS.find(b => b.id === playerData.selectedBackground);
+            const skin = SKINS.find(s => s.id === playerData.selectedSkin);
+            const selectedFood = getSelectedFood();
+
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, bg.colors[0]);
+            gradient.addColorStop(1, bg.colors[1]);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+            for (let i = 0; i <= tileCount; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * gridSize, 0);
+                ctx.lineTo(i * gridSize, canvas.height);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i * gridSize);
+                ctx.lineTo(canvas.width, i * gridSize);
+                ctx.stroke();
+            }
+
+            // Еда
+            const foodX = food.x * gridSize + gridSize / 2;
+            const foodY = food.y * gridSize + gridSize / 2;
+            
+            ctx.shadowColor = selectedFood.color;
+            ctx.shadowBlur = 10;
+            
+            ctx.beginPath();
+            ctx.arc(foodX, foodY, gridSize / 2 - 2, 0, Math.PI * 2);
+            ctx.fillStyle = selectedFood.color;
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+            
+            ctx.font = `${gridSize - 4}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(selectedFood.emoji, foodX, foodY + 1);
+
+            // Змейка
+            snake.forEach((segment, index) => {
+                const x = segment.x * gridSize;
+                const y = segment.y * gridSize;
+                
+                let color;
+                if (skin.colors[0] === 'rainbow') {
+                    const hue = (index * 30 + Date.now() / 20) % 360;
+                    color = `hsl(${hue}, 100%, 50%)`;
+                } else {
+                    const t = index / Math.max(snake.length - 1, 1);
+                    color = lerpColor(skin.colors[0], skin.colors[1], t);
+                }
+                
+                if (godMode && index === 0) {
+                    ctx.shadowColor = '#ff0000';
+                    ctx.shadowBlur = 15;
+                }
+                
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.roundRect(x + 1, y + 1, gridSize - 2, gridSize - 2, index === 0 ? 6 : 4);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+
+                if (index === 0) {
+                    ctx.fillStyle = godMode ? '#ff0000' : '#1a1a2e';
+                    const eyePositions = getEyePositions(x, y, direction);
+                    eyePositions.forEach(pos => {
+                        ctx.beginPath();
+                        ctx.arc(pos.x, pos.y, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                }
+            });
+        }
+
+        function getEyePositions(x, y, dir) {
+            if (dir.x === 1) return [{ x: x + gridSize - 6, y: y + 6 }, { x: x + gridSize - 6, y: y + gridSize - 6 }];
+            if (dir.x === -1) return [{ x: x + 6, y: y + 6 }, { x: x + 6, y: y + gridSize - 6 }];
+            if (dir.y === 1) return [{ x: x + 6, y: y + gridSize - 6 }, { x: x + gridSize - 6, y: y + gridSize - 6 }];
+            return [{ x: x + 6, y: y + 6 }, { x: x + gridSize - 6, y: y + 6 }];
+        }
+
+        function lerpColor(color1, color2, t) {
+            const c1 = hexToRgb(color1), c2 = hexToRgb(color2);
+            return `rgb(${Math.round(c1.r + (c2.r - c1.r) * t)}, ${Math.round(c1.g + (c2.g - c1.g) * t)}, ${Math.round(c1.b + (c2.b - c1.b) * t)})`;
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : { r: 0, g: 0, b: 0 };
+        }
+
+        function gameOver() {
+            isRunning = false;
+            clearInterval(gameLoop);
+            updatePauseButton();
+            
+            playerData.coins += coinsThisGame;
+            coinsEl.textContent = playerData.coins;
+            
+            const isNewRecord = score > playerData.highScore;
+            if (isNewRecord) {
+                playerData.highScore = score;
+                highScoreEl.textContent = playerData.highScore;
+            }
+            
+            savePlayerData();
+            
+            finalScoreEl.textContent = score;
+            coinsEarnedEl.textContent = coinsThisGame;
+            multBreakdownEl.textContent = `${applesThisGame} × (${getTotalMultiplier()} + ${getFoodBonus()})`;
+            newRecordEl.style.display = isNewRecord ? 'block' : 'none';
+            
+            difficultyBadgeEl.className = 'difficulty-badge ' + selectedSpeedClass;
+            difficultyBadgeEl.textContent = selectedDifficulty;
+            
+            gameOverEl.classList.remove('hidden');
+            vibrate([100, 50, 100]);
+        }
+
+        function startGame() {
+            startScreenEl.classList.add('hidden');
+            gameOverEl.classList.add('hidden');
+            pauseOverlayEl.classList.add('hidden');
+            shopModal.classList.add('hidden');
+            adminModal.classList.add('hidden');
+            confirmModal.classList.add('hidden');
+            initGame();
+            draw();
+            isRunning = true;
+            isPaused = false;
+            updatePauseButton();
+            gameLoop = setInterval(update, gameSpeed);
+        }
+
+        function togglePause() {
+            if (!isRunning) return;
+            isPaused = !isPaused;
+            
+            if (isPaused) {
+                document.getElementById('pauseScore').textContent = score;
+                document.getElementById('pauseCoins').textContent = coinsThisGame;
+            }
+            
+            pauseOverlayEl.classList.toggle('hidden', !isPaused);
+            updatePauseButton();
+        }
+
+        function updatePauseButton() {
+            pauseBtnEl.textContent = isPaused ? '▶️' : '⏸️';
+            pauseBtnEl.classList.toggle('paused', isPaused);
+        }
+
+        function vibrate(pattern) {
+            if (navigator.vibrate) navigator.vibrate(pattern);
+        }
+
+        function changeDirection(newDir) {
+            if (!isRunning || isPaused) return;
+            
+            const opposites = { up: 'down', down: 'up', left: 'right', right: 'left' };
+            const currentDir = direction.x === 1 ? 'right' : direction.x === -1 ? 'left' : direction.y === 1 ? 'down' : 'up';
+            
+            if (opposites[newDir] === currentDir && !godMode) return;
+            
+            const dirs = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
+            nextDirection = dirs[newDir];
+            vibrate(10);
+        }
+
+        // ===== СОБЫТИЯ =====
+        speedBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                speedBtns.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                baseSpeed = parseInt(btn.dataset.speed);
+                selectedDifficulty = btn.dataset.name;
+                difficultyMult = parseInt(btn.dataset.mult);
+                selectedSpeedClass = btn.classList[1];
+                updateMultDisplay();
+            });
+        });
+
+        shopTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                shopTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentShopTab = tab.dataset.tab;
+                renderShopContent();
+            });
+        });
+
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', startGame);
+        document.getElementById('pauseBtn').addEventListener('click', togglePause);
+        document.getElementById('resumeBtn').addEventListener('click', togglePause);
+        document.getElementById('shopBtn').addEventListener('click', openShop);
+        document.getElementById('closeShop').addEventListener('click', closeShop);
+        document.getElementById('closeShopBtn').addEventListener('click', closeShop);
+        
+        // Кнопки выхода в меню
+        document.getElementById('homeBtn').addEventListener('click', showExitConfirm);
+        document.getElementById('menuFromPause').addEventListener('click', showExitConfirm);
+        document.getElementById('menuFromGameOver').addEventListener('click', goToMenu);
+        document.getElementById('confirmExit').addEventListener('click', goToMenu);
+        document.getElementById('cancelExit').addEventListener('click', cancelExit);
+
+        let touchStartX = 0, touchStartY = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.modal')) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            if (e.target.closest('.modal') || e.target.closest('.header')) return;
+            const deltaX = e.changedTouches[0].clientX - touchStartX;
+            const deltaY = e.changedTouches[0].clientY - touchStartY;
+            
+            if (Math.abs(deltaX) < 30 && Math.abs(deltaY) < 30) return;
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                changeDirection(deltaX > 0 ? 'right' : 'left');
+            } else {
+                changeDirection(deltaY > 0 ? 'down' : 'up');
+            }
+        }, { passive: true });
+
+        document.addEventListener('keydown', (e) => {
+            const keyMap = { 'ArrowUp': 'up', 'w': 'up', 'ArrowDown': 'down', 's': 'down', 'ArrowLeft': 'left', 'a': 'left', 'ArrowRight': 'right', 'd': 'right' };
+            if (keyMap[e.key]) changeDirection(keyMap[e.key]);
+            if (e.key === ' ' || e.key === 'Escape') {
+                if (confirmModal.classList.contains('hidden')) {
+                    togglePause();
+                } else {
+                    cancelExit();
+                }
+            }
+            if (e.key === 'Enter' && !isRunning) startGame();
+            if (e.key === '`' || e.key === '~') openAdmin();
+            if (e.key === 'Home' || e.key === 'h') showExitConfirm();
+        });
+
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                this.moveTo(x + r, y);
+                this.arcTo(x + w, y, x + w, y + h, r);
+                this.arcTo(x + w, y + h, x, y + h, r);
+                this.arcTo(x, y + h, x, y, r);
+                this.arcTo(x, y, x + w, y, r);
+                this.closePath();
+                return this;
+            };
+        }
+
+        initGame();
+        updateCanvasStyle();
+        draw();
+    </script>
 </body>
 </html>
